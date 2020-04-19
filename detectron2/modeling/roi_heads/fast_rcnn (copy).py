@@ -93,8 +93,6 @@ def fast_rcnn_inference_single_image(
         scores = scores[valid_mask]
 
     scores = scores[:, :-1]
-    Tscores = scores
-    #print (scores)
     num_bbox_reg_classes = boxes.shape[1] // 4
     # Convert to Boxes to use the `clip` function ...
     boxes = Boxes(boxes.reshape(-1, 4))
@@ -111,25 +109,16 @@ def fast_rcnn_inference_single_image(
     else:
         boxes = boxes[filter_mask]
     scores = scores[filter_mask]
-    #print (scores)
 
     # Apply per-class NMS
-    uniclass = torch.zeros(len(filter_inds[:, 1].tolist())).cuda()
-    #keep = batched_nms(boxes, scores, filter_inds[:, 1], nms_thresh)
-    keep = batched_nms(boxes, scores, uniclass, nms_thresh)
+    keep = batched_nms(boxes, scores, filter_inds[:, 1], nms_thresh)
     if topk_per_image >= 0:
         keep = keep[:topk_per_image]
     boxes, scores, filter_inds = boxes[keep], scores[keep], filter_inds[keep]
-    #print(filter_inds[:, 0])
-    #print(torch.ByteTensor([0,1,0,0,1]))
-    #print(filter_inds[:, 1])
-    #print(keep)
-    #print(Tscores[filter_inds[:, 0]])
-    #print (scores)
+
     result = Instances(image_shape)
     result.pred_boxes = Boxes(boxes)
-    #result.scores = scores
-    result.scores = Tscores[filter_inds[:, 0]]
+    result.scores = scores
     result.pred_classes = filter_inds[:, 1]
     return result, filter_inds[:, 0]
 
